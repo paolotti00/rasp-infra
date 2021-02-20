@@ -29,4 +29,4 @@ This README would normally document whatever steps are necessary to get your app
 * Other community or team contact
 
 ### Util urls ###
-https://howchoo.com/g/ote2mjkzzta/control-raspberry-pi-fan-temperature-python
+* https://howchoo.com/g/ote2mjkzzta/control-raspberry-pi-fan-temperature-python
