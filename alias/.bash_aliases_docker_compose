@@ -1,0 +1,2 @@
+alias dcOurDay="docker-compose -f /opt/composes/apps/ourday/app.docker.compose.yml"
+alias dcInfra="docker-compose -f /opt/composes/infra/infra.docker.compose.yml"
