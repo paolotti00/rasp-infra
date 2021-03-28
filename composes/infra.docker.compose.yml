@@ -20,5 +20,6 @@ services:
     container_name: jenkins
     volumes:
       - /home/jenkins/jenkins_home:/var/jenkins_home #questa cartella deve essere già esistente (deve essere dell'utente jenkins)
-#      - /var/run/docker.sock:/var/run/docker.sock
-#     - /usr/local/bin/docker:/usr/local/bin/docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/local/bin/docker:/usr/local/bin/docker
+    restart: unless-stopped
