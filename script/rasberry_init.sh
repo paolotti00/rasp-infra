@@ -235,7 +235,6 @@ cat >> docker-compose.yml <<EOL
   transmission:
     container_name: transmission
     image: linuxserver/transmission
-    user: "\${UID}:\${GID}"
     ports:
       - "9091:9091"
     volumes:
@@ -246,13 +245,14 @@ cat >> docker-compose.yml <<EOL
       - $external_hd_mount_point/multimedia/movies:/torrent-complete/movies
       - $external_hd_mount_point/multimedia/movies:/torrent-complete/show
     environment:
+      - PUID=1000
+      - PGID=1000
       - TZ=Europe/Rome
       - TRANSMISSION_INCOMPLETE_DIR=/torrent-inprogress
       - TRANSMISSION_DOWNLOAD_DIR=/torrent-complete
       - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=true
       - TRANSMISSION_RPC_USERNAME=paolotti
       - TRANSMISSION_RPC_PASSWORD=torrent_pass_123
-    restart: unless-stopped
 
   minidlna:
     container_name: minidlna
