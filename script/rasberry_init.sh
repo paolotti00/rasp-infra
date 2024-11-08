@@ -27,6 +27,15 @@ fi
 echo "Is this the first installation? (y/n)"
 read first_install_choice
 
+# Ask if the user wants to configure Zigbee2MQTT
+echo "Would you like to configure Zigbee2MQTT? (y/n)"
+read zigbee2mqtt_choice
+
+if [ "$zigbee2mqtt_choice" = "y" ]; then
+  echo "Are you using slzb-06m.local for Zigbee2MQTT? (y/n)"
+  read use_slzb_local
+fi
+
 if [ "$first_install_choice" = "y" ]; then
   # 1. Ask if the user wants to update the system
   echo "Would you like to update the system? (y/n) (Recommended to do this at least the first time)"
@@ -127,6 +136,51 @@ presentation_url=http://raspberrypi:8200
 inotify=yes
 EOL'
 
+# ===========================
+# Zigbee2MQTT Configuration
+# ===========================
+
+if [ "$zigbee2mqtt_choice" = "y" ]; then
+  # Create directory for Zigbee2MQTT persistent data
+  mkdir -p zigbee2mqtt/data
+
+  if [ "$use_slzb_local" = "y" ]; then
+    # Attempt to resolve the IP address of slzb-06m.local
+    # This step is necessary because Zigbee2MQTT requires a stable IP address rather than relying on mDNS (which might not work reliably in Docker).
+    slzb_ip=$(ping -c 1 slzb-06m.local | awk -F'[()]' '/PING/{print $2}')
+    if [ -z "$slzb_ip" ]; then
+      echo "Failed to resolve slzb-06m.local. Please make sure the device is online and try again."
+      exit 1
+    else
+      echo "Resolved slzb-06m.local to IP: $slzb_ip"
+    fi
+  else
+    read -p "Enter the IP address for the Zigbee2MQTT dongle: " slzb_ip
+  fi
+
+  # Create the Zigbee2MQTT configuration file
+  cat > zigbee2mqtt/data/configuration.yaml <<EOL
+mqtt:
+  base_topic: zigbee2mqtt
+  server: "mqtt://localhost:1883"  # Address of the MQTT broker (use localhost in host network mode) (Mosquitto in this case)
+
+serial:
+  port: "tcp://${slzb_ip}:6638"  # Using resolved IP address of the Zigbee dongle
+  baudrate: 115200                   # Baudrate for communication with the dongle
+  adapter: ezsp                      # Type of adapter; SLZB-06M uses the EZSP protocol
+
+advanced:
+  disable_led: false                 # Keeps the green LED on (set to true to disable)
+  transmit_power: 20                 # Set transmit power to maximum (20 dBm)
+
+frontend:
+  port: 8080                         # (Optional) Enable the Zigbee2MQTT web frontend on this port
+
+homeassistant: false                 # Disable automatic integration with Home Assistant
+permit_join: false                   # Prevent devices from automatically joining the Zigbee network
+EOL
+fi
+
 # Set UID and GID environment variables for Docker Compose
 export UID=$(id -u)
 export GID=$(id -g)
@@ -159,6 +213,24 @@ services:
       - "1883:1883"
       - "9001:9001"
     restart: unless-stopped
+EOL
+
+if [ "$zigbee2mqtt_choice" = "y" ]; then
+  cat >> docker-compose.yml <<EOL
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - ./zigbee2mqtt/data:/app/data
+    environment:
+      - TZ=Europe/Rome
+    network_mode: host
+    restart: unless-stopped
+EOL
+fi
+
+cat >> docker-compose.yml <<EOL
 
   transmission:
     container_name: transmission
