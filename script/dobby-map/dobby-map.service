@@ -1,0 +1,11 @@
+[Unit]
+Description=Dobby map SVG to PNG converter
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/projects/rasp-infra/script/dobby-map/dobby_map_service.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
